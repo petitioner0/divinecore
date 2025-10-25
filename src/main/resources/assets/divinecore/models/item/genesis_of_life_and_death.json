@@ -1,0 +1,6 @@
+{
+    "parent": "item/generated",
+    "textures": {
+        "layer0": "divinecore:item/genesis_of_life_and_death"
+    }
+}

@@ -1,0 +1,6 @@
+{
+    "parent": "item/generated",
+    "textures": {
+        "layer0": "divinecore:item/root_of_thought_and_soul"
+    }
+}

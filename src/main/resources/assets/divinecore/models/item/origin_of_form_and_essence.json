@@ -1,0 +1,6 @@
+{
+    "parent": "item/generated",
+    "textures": {
+        "layer0": "divinecore:item/origin_of_form_and_essence"
+    }
+}

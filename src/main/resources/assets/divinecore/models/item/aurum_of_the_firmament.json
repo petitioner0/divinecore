@@ -1,0 +1,7 @@
+{
+    "parent": "minecraft:item/generated",
+    "textures": {
+      "layer0": "divinecore:item/aurum_of_the_firmament"
+    }
+  }
+  

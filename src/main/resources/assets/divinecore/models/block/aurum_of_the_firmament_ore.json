@@ -1,0 +1,6 @@
+{
+    "parent": "minecraft:block/cube_all",
+    "textures": {
+      "all": "divinecore:block/aurum_of_the_firmament_ore"
+    }
+  }

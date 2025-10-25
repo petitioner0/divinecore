@@ -1,0 +1,7 @@
+{
+    "message_id": "ender_eye_shatter",
+    "scaling": "always",
+    "exhaustion": 0,
+    "effects": "hurt",
+    "death_message_type": "default"
+}
