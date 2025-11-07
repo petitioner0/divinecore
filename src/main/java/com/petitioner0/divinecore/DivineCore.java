@@ -10,7 +10,6 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
-import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.common.loot.IGlobalLootModifier;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
@@ -70,10 +69,16 @@ public class DivineCore {
 
         // register loot modifiers
         LOOT_MODIFIERS.register(modEventBus);
-        OrbitingEffectHandler.registerOrbitingLogics();
+        
+        modEventBus.addListener(this::onCommonSetup);
 
     }
     
+    private void onCommonSetup(final FMLCommonSetupEvent event) {
+        event.enqueueWork(() -> {
+            OrbitingEffectHandler.registerOrbitingLogics();
+        });
+    }
 
     @SubscribeEvent
     public void onServerStarting(ServerStartingEvent event) {
