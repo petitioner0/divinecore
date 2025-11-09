@@ -69,6 +69,7 @@ public class DivineCore {
 
         // register loot modifiers
         LOOT_MODIFIERS.register(modEventBus);
+        ModCreativeTabs.CREATIVE_TABS.register(modEventBus);
         
         modEventBus.addListener(this::onCommonSetup);
 
