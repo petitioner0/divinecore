@@ -6,7 +6,6 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.boss.wither.WitherBoss;
-import net.minecraft.world.entity.boss.enderdragon.EnderDragon;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -34,7 +33,6 @@ public class EleventhEdicts {
         wither.targetSelector.addGoal(2,
                 new NearestAttackableTargetGoal<>(wither, Player.class, 10, true, false,
                         p -> p instanceof Player pl && !pl.isSpectator() && !pl.isCreative()));
-        wither.goalSelector.addGoal(1, new WitherHealFromCrystalGoal(wither));
 
         tag.putBoolean(TAG_PATCHED, true);
     }
@@ -69,10 +67,6 @@ public class EleventhEdicts {
         if (!(event.getEntity() instanceof WitherBoss wither)) return;
         if (wither.level().isClientSide) return; 
         if (wither.level().dimension() != Level.END) return; 
-        
-        // Check if the wither has our tag
-        var tag = wither.getPersistentData();
-        if (!tag.getBoolean(TAG_PATCHED)) return;
         
         // Drop reward item
         ItemHelper.dropItemAt(wither.level(), 
