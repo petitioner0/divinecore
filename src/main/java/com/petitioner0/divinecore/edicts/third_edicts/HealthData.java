@@ -48,6 +48,22 @@ public final class HealthData {
         applyPenaltyModifier(player, getPenalty(player), false);
     }
 
+    /** 临时移除生命值惩罚（用于 ShardOfTheSoul） */
+    public static void temporarilyRemovePenalty(ServerPlayer player) {
+        AttributeInstance inst = player.getAttribute(Attributes.MAX_HEALTH);
+        if (inst == null) return;
+        
+        AttributeModifier old = inst.getModifier(PENALTY_ID);
+        if (old != null) {
+            inst.removeModifier(old);
+        }
+    }
+
+    /** 重新应用生命值惩罚（用于 ShardOfTheSoul 取消激活时） */
+    public static void reapplyPenalty(ServerPlayer player) {
+        reapply(player);
+    }
+
     private static void applyPenaltyModifier(ServerPlayer player, int penalty, boolean clampHealthNow) {
         AttributeInstance inst = player.getAttribute(Attributes.MAX_HEALTH);
         if (inst == null) return;

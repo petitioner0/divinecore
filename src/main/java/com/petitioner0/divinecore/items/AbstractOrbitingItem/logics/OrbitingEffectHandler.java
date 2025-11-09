@@ -40,9 +40,9 @@ public class OrbitingEffectHandler {
     }
     public static void registerOrbitingLogics() {
             OrbitingEffectHandler.registerLogic(ModItems.AETHERIAL_REVERIE.get(), new AetheriaReverieLogic());
+            OrbitingEffectHandler.registerLogic(ModItems.SHARD_OF_THE_SOUL.get(), new ShardOfTheSoulLogic());
             /*OrbitingEffectHandler.registerLogic(ModItems.FRAGMENT_OF_NIHIL.get(), new FragmentOfNihilLogic());
             OrbitingEffectHandler.registerLogic(ModItems.PRIMORDIAL_SHATTERER.get(), new PrimordialShattererLogic());
-            OrbitingEffectHandler.registerLogic(ModItems.SHARD_OF_THE_SOUL.get(), new ShardOfTheSoulLogic());
             OrbitingEffectHandler.registerLogic(ModItems.ULTIMATE_FULFILLMENT.get(), new UltimateFulfillmentLogic());
             OrbitingEffectHandler.registerLogic(ModItems.INDOMITABLE_WILL.get(), new IndomitableWillLogic());
             OrbitingEffectHandler.registerLogic(ModItems.MYSTIC_ESSENCE.get(), new MysticEssenceLogic());
