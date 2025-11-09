@@ -27,6 +27,8 @@ public final class ModItems {
                     .stacksTo(1)
                     .fireResistant()
                     .rarity(Rarity.EPIC)));
+    public static final DeferredItem<Item> PRIMORDIAL_SHATTERER_INCOMPLETE =
+            ITEMS.registerSimpleItem("primordial_shatterer_incomplete", defaultProps());
 
     public static final DeferredItem<Item> SHARD_OF_THE_SOUL =
             ITEMS.register("shard_of_the_soul", id -> new ShardOfTheSoul(defaultProps()));
