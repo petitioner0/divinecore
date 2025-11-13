@@ -23,9 +23,10 @@ repositories {
     maven { url = "https://maven.ithundxr.dev/snapshots" }
     maven { url = "https://maven.neoforged.net/releases" }
     maven { url = "https://maven.modrinth.com/releases" }
+    maven { url = "https://maven.architectury.dev/" }
     maven { url = "https://maven.ftb.dev/releases" }
-    maven { url = "https://maven.architectury.dev/releases" }
     maven { url = "https://maven.theillusivec4.top/releases" }
+    maven { url = "https://cursemaven.com" }
 }
 
 base {
@@ -128,6 +129,11 @@ dependencies {
 
     // Registrate（Create 团队常用的注册工具库）
     implementation("com.tterrag.registrate:Registrate:${registrate_version}")
+
+    implementation ("dev.ftb.mods:ftb-library-neoforge:2101.1.26")
+    implementation ("dev.ftb.mods:ftb-quests-neoforge:2101.1.17")
+
+
 
     // Example optional mod dependency with JEI
     // The JEI API is declared for compile time use, while the full JEI artifact is used at runtime
