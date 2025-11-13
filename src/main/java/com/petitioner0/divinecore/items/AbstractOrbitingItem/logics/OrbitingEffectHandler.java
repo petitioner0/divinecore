@@ -41,6 +41,7 @@ public class OrbitingEffectHandler {
     public static void registerOrbitingLogics() {
             OrbitingEffectHandler.registerLogic(ModItems.AETHERIAL_REVERIE.get(), new AetheriaReverieLogic());
             OrbitingEffectHandler.registerLogic(ModItems.SHARD_OF_THE_SOUL.get(), new ShardOfTheSoulLogic());
+            OrbitingEffectHandler.registerLogic(ModItems.SHATTERED_RIFTSTONE.get(), new ShatteredRiftstoneLogic());
             /*OrbitingEffectHandler.registerLogic(ModItems.FRAGMENT_OF_NIHIL.get(), new FragmentOfNihilLogic());
             OrbitingEffectHandler.registerLogic(ModItems.PRIMORDIAL_SHATTERER.get(), new PrimordialShattererLogic());
             OrbitingEffectHandler.registerLogic(ModItems.ULTIMATE_FULFILLMENT.get(), new UltimateFulfillmentLogic());
@@ -51,7 +52,6 @@ public class OrbitingEffectHandler {
             OrbitingEffectHandler.registerLogic(ModItems.SUNDERED_GLOOM.get(), new SunderedGloomLogic());
             OrbitingEffectHandler.registerLogic(ModItems.EMBER_OF_THE_SUNFORGED.get(), new EmberOfTheSunforgedLogic());
             OrbitingEffectHandler.registerLogic(ModItems.NETHERWYRM_COVENANT_CORE.get(), new NetherwyrmCovenantCoreLogic());
-            OrbitingEffectHandler.registerLogic(ModItems.SHATTERED_RIFTSTONE.get(), new ShatteredRiftstoneLogic());
             OrbitingEffectHandler.registerLogic(ModItems.SACRIFICIAL_VERDANT.get(), new SacrificialVerdantLogic());
             OrbitingEffectHandler.registerLogic(ModItems.AURUM_OF_THE_FIRMAMENT.get(), new AurumOfTheFirmamentLogic());
             OrbitingEffectHandler.registerLogic(ModItems.MIMIC_MALEDICTION.get(), new MimicMaledictionLogic());
