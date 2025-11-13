@@ -2,7 +2,7 @@ package com.petitioner0.divinecore;
 
 import java.util.function.Supplier;
 
-import com.petitioner0.divinecore.DivineCore;
+import com.petitioner0.divinecore.blocks.ModBlocks;
 import com.petitioner0.divinecore.items.ModItems;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
@@ -20,6 +20,7 @@ public class ModCreativeTabs {
                     .icon(() -> new ItemStack(ModItems.AETHERIAL_REVERIE.get()))
                     .displayItems((parameters, output) -> {
                         ModItems.ITEMS.getEntries().forEach(item -> output.accept(item.get()));
+                        ModBlocks.BLOCKS.getEntries().forEach(block -> output.accept(block.get().asItem()));
                     })
                     .build()
             );
