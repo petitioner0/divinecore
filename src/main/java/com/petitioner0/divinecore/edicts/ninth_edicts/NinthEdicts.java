@@ -1,8 +1,10 @@
 package com.petitioner0.divinecore.edicts.ninth_edicts;
 
+import com.petitioner0.divinecore.FTBHelper;
 import com.petitioner0.divinecore.items.ItemHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.EntitySelector;
 
 import net.minecraft.world.entity.monster.Creeper;
@@ -123,9 +125,12 @@ public class NinthEdicts {
         nearest.teleportTo(x, y, z);
         nearest.resetFallDistance();
 
+        FTBHelper.completeTask((ServerPlayer) player, "6A8D86643ABBABBE");
+
         // If it's a creeper, start tracking
         if (nearest instanceof Creeper creeper) {
             startCreeperTracking(creeper, player);
+            FTBHelper.completeTask((ServerPlayer) player, "4D82B4D6B86653AE");
         }
 
         return true;
@@ -216,6 +221,8 @@ public class NinthEdicts {
             cleanupTracking(id);
             return;
         }
+
+        FTBHelper.completeTask((ServerPlayer) p, "715098393D0E81A8");
 
         ItemHelper.dropItemAt(level, 
             new net.minecraft.world.phys.Vec3(explosion.center().x + 0.5, explosion.center().y + 0.5, explosion.center().z + 0.5), 

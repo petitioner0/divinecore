@@ -2,6 +2,7 @@ package com.petitioner0.divinecore.edicts.third_edicts;
 
 import com.petitioner0.divinecore.DivineCore;
 
+import com.petitioner0.divinecore.FTBHelper;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -24,6 +25,8 @@ public class HealthPenaltyHandler {
         if (event.isCanceled())
             return;
         HealthData.addPenaltyAndApply(player);
+
+        FTBHelper.completeTask(player, "2B678A4C5AD84080");
     }
 
     @SubscribeEvent

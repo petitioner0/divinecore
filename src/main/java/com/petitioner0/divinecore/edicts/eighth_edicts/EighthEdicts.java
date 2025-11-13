@@ -1,10 +1,12 @@
 package com.petitioner0.divinecore.edicts.eighth_edicts;
 
+import com.petitioner0.divinecore.FTBHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LightningBolt;
@@ -15,6 +17,7 @@ import net.minecraft.world.level.block.BeaconBlock;
 import net.minecraft.world.level.block.entity.BeaconBlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 
@@ -68,26 +71,34 @@ public class EighthEdicts {
         if (!(event.getLevel() instanceof ServerLevel level))
             return;
 
+
         // 1) Try the original lightning position
         BlockPos basePos = lightning.blockPosition();
         BlockPos strikePos = basePos;
         BlockState struck = level.getBlockState(strikePos);
 
+        AABB range = new AABB(strikePos).inflate(16.0D);
+        List<ServerPlayer> players = level.getEntitiesOfClass(ServerPlayer.class, range);
+
+        for (ServerPlayer player : players) {
+            FTBHelper.completeTask(player, "4F78D75E43AB5598");
+        }
+
         // 2) If it's air, try the block below
         if (struck.isAir()) {
             BlockPos below = basePos.below();
-            BlockState belowState = level.getBlockState(below);
-            if (!belowState.isAir()) {
-                strikePos = below;
-                struck = belowState;
-            } else {
-                // The original position and the block below are air, don't process
-                return;
-            }
+            struck = level.getBlockState(below);
+            if (struck.isAir()) return;
+            strikePos = below;
         }
 
         // 3) Check and process the fully activated beacon
         if (struck.getBlock() instanceof BeaconBlock) {
+
+            for (ServerPlayer player : players) {
+                FTBHelper.completeTask(player, "7E8CCC4FED40A291");
+            }
+
             if (isBeaconFullyActivated(level, strikePos)) {
                 destroyBeaconAndSetBlock(level, strikePos);
                 return;
@@ -105,26 +116,11 @@ public class EighthEdicts {
         BlockUtils.safeSetBlockNormal(level, strikePos, candidate);
     }
 
-    /**
-     * 检查信标是否为满级激活状态
-     * 
-     * @param level 世界
-     * @param pos   信标位置
-     * @return 是否为满级激活
-     */
     private static boolean isBeaconFullyActivated(Level level, BlockPos pos) {
         int levels = getBeaconLevels(level, pos);
         // 满级信标有4层金字塔结构，且等级为4表示已激活
         return levels == 4;
     }
-
-    /**
-     * 获取信标的等级
-     * 
-     * @param level 世界
-     * @param pos   信标位置
-     * @return 信标等级，若未激活则为0
-     */
     private static int getBeaconLevels(Level level, BlockPos pos) {
         BlockEntity be = level.getBlockEntity(pos);
         if (be instanceof BeaconBlockEntity beacon) {
@@ -134,14 +130,7 @@ public class EighthEdicts {
         return 0;
     }
 
-    /**
-     * 摧毁信标并掉落模组物品
-     * 
-     * @param level 世界
-     * @param pos   信标位置
-     */
     private static void destroyBeaconAndSetBlock(ServerLevel level, BlockPos pos) {
-        // 摧毁信标方块
         level.removeBlockEntity(pos);
         level.setBlock(pos, ModBlocks.CINDER_OF_MIGHT_BLOCK.get().defaultBlockState(), 3);
     }

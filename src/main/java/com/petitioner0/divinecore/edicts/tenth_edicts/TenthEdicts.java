@@ -1,5 +1,6 @@
 package com.petitioner0.divinecore.edicts.tenth_edicts;
 
+import com.petitioner0.divinecore.FTBHelper;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
@@ -100,8 +101,10 @@ public class TenthEdicts {
                 // Only detect level and apply corresponding effects when reaching threshold
                 int newLevel = calculateLevel(sp, level, eye, sunDir, rayDist);
                 applyLevelEffect(sp, newLevel);
-                tag.putInt(NBT_KEY, 0); 
-                
+                tag.putInt(NBT_KEY, 0);
+
+                FTBHelper.completeTask((ServerPlayer) player, "6CD354FCEE923044");
+
                 if (currentLevel != newLevel) {
                     tag.putInt(LEVEL_NBT_KEY, newLevel);
                 }
@@ -145,16 +148,19 @@ public class TenthEdicts {
         // Condition 1: Line of sight only blocked by glass
         if (isOnlyGlassObstructionStrict(world, player, eye, sunDir, rayDist)) {
             level++;
+            FTBHelper.completeTask(player, "70EEB7735EDB634B");
         }
         
         // Condition 2: Using telescope
         if (isUsingTelescope(player)) {
             level++;
+            FTBHelper.completeTask(player, "03505755469DB440");
         }
         
         // Condition 3: Wearing engineer's goggles on head
         if (isWearingEngineersGoggles(player)) {
             level++;
+            FTBHelper.completeTask(player, "431DCECDA24210CB");
         }
         
         return Math.min(level, MAX_LEVEL);
@@ -299,15 +305,6 @@ public class TenthEdicts {
                 
                 player.level().playSound(null, player.getX(), player.getY(), player.getZ(), 
                     SoundEvents.GLASS_BREAK, SoundSource.PLAYERS, 1.0f, 1.2f);
-                
-                
-                // Break telescope in hand
-                if (isUsingTelescope(player)) {
-                    ItemStack telescope = player.getUseItem();
-                    if (telescope.getCount() > 1) {
-                        telescope.shrink(1);
-                    }
-                }
                 
                 // Deal damage
                 player.hurt(ModDamageSources.of(player.level(), ModDamageTypes.SUN_GAZE), damageAmount);

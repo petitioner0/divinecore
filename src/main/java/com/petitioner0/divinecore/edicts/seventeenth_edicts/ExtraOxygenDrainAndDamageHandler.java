@@ -1,6 +1,8 @@
 package com.petitioner0.divinecore.edicts.seventeenth_edicts;
 
+import com.petitioner0.divinecore.FTBHelper;
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.util.Mth;
 import net.minecraft.world.effect.MobEffects;
@@ -10,6 +12,7 @@ import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import net.neoforged.neoforge.event.tick.EntityTickEvent;
 import com.petitioner0.divinecore.DivineCore;
 
@@ -30,7 +33,7 @@ public class ExtraOxygenDrainAndDamageHandler {
 
     @SubscribeEvent
     public static void onLivingTick(EntityTickEvent.Pre event) {
-        if (!(event.getEntity() instanceof Player player)) return;
+        if (!(event.getEntity() instanceof ServerPlayer player)) return;
         if (player.isSpectator() || player.isCreative()) return;
 
         Level level = player.level();
@@ -56,26 +59,26 @@ public class ExtraOxygenDrainAndDamageHandler {
             }
         }
 
+        if (waterColumn >= 10.0D) {
+            FTBHelper.completeTask(player, "7A4F71E17A06A5CF");
+        }
+
+        if (player.hasEffect(MobEffects.CONDUIT_POWER)) {
+            FTBHelper.completeTask(player, "670273D492CD194A");
+        }
+
         lastAir.put(player, now);
 
     }
 
     @SubscribeEvent
-    public static void onDrownDamage(net.neoforged.neoforge.event.entity.living.LivingDamageEvent.Post event) {
+    public static void onDrownDamage(LivingIncomingDamageEvent event) {
         if (!(event.getEntity() instanceof Player player)) return;
         if (!event.getSource().is(net.minecraft.tags.DamageTypeTags.IS_DROWNING)) return; 
 
         int depth = computeWaterDepth(player);
         float extra = Math.min(6.0F, 0.5F + depth * 0.05F);
-
-        var nbt = player.getPersistentData();
-        if (nbt.getBoolean("deep_pressure$drowning_extra")) return;
-        nbt.putBoolean("deep_pressure$drowning_extra", true);
-        try {
-            player.hurt(player.damageSources().drown(), extra);
-        } finally {
-            nbt.remove("deep_pressure$drowning_extra");
-        }
+        event.setAmount(event.getAmount() + extra);
     }
 
 

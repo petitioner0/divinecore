@@ -1,7 +1,9 @@
 package com.petitioner0.divinecore.edicts.eighteenth_edicts;
 
+import com.petitioner0.divinecore.FTBHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -27,7 +29,7 @@ public class EighteenthEdicts {
     /** Every tick refresh: if the player's eyes are in the gravity block, add digging fatigue */
     @SubscribeEvent
     public static void onPlayerTick(PlayerTickEvent.Post event) {
-        if (!(event.getEntity() instanceof Player player)) return;
+        if (!(event.getEntity() instanceof ServerPlayer player)) return;
         if (player.level().isClientSide()) return;
 
         // If the player's eyes are in the gravity block, add digging fatigue effect
@@ -35,13 +37,15 @@ public class EighteenthEdicts {
             player.addEffect(new MobEffectInstance(
                     MobEffects.DIG_SLOWDOWN, 40, 1, true, false, false
             ));
+
+            FTBHelper.completeTask(player, "40971A8F6559A1E5");
         }
 
-        // Check 30 seconds reward conditions: eyes in gravity block + turtle helmet + water breathing
-        boolean allRewardConditionsMet = isEyeInGravityBlock(player) && 
-                                       hasTurtleOrWaterBreathing(player);
+        if (hasTurtleOrWaterBreathing(player)) {
+            FTBHelper.completeTask(player, "3F974A9A17964815");
+        }
 
-        if (allRewardConditionsMet) {
+        if (isEyeInGravityBlock(player) && hasTurtleOrWaterBreathing(player)) {
             // Increase the duration
             int currentDuration = playerDurationMap.getOrDefault(player, 0) + 1;
             playerDurationMap.put(player, currentDuration);

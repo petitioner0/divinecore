@@ -1,10 +1,12 @@
 package com.petitioner0.divinecore.edicts.twentieth_edicts;
 
 import com.petitioner0.divinecore.DivineCore;
+import com.petitioner0.divinecore.FTBHelper;
 import com.petitioner0.divinecore.edicts.nineteenth_edicts.ColdTracker;
 import com.petitioner0.divinecore.effects.ModEffects;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.player.Player;
@@ -38,7 +40,7 @@ public class HeatTracker {
 
     // --- 可调参数 --- //
     /** 每tick基础叠加量（未乘系数前） */
-    private static final double BASE_GAIN_PER_TICK = 1.0D;
+    private static final double BASE_GAIN_PER_TICK = 0.05D;
 
     /** 每移动1格（水平距离）带来的炎热值额外叠加（独立于当tick基础增长） */
     private static final double MOVEMENT_GAIN_PER_BLOCK = 2.0D;
@@ -106,6 +108,7 @@ public class HeatTracker {
             // 1) 计算当tick炎热增长（仅在指定地狱群系）
             double gainThisTick = 0.0D;
             if (biomeKey != null) {
+                FTBHelper.completeTask((ServerPlayer) player, "4D1DEF5ECC30D310");
                 Double coeff = HEAT_COEFFICIENTS.get(biomeKey);
                 if (coeff != null) {
                     gainThisTick = BASE_GAIN_PER_TICK * coeff;
@@ -152,6 +155,7 @@ public class HeatTracker {
 
         // 如果同时具有霜蚀和炎狱效果，则不给予任何炎热相关的负面状态
         if (hasBothEffects) {
+            FTBHelper.completeTask((ServerPlayer) player,"55E400178DAEE8CB");
             return;
         }
 
@@ -168,6 +172,7 @@ public class HeatTracker {
         // 检查是否达到最高阈值，如果是则给予炎狱效果
         if (stage >= 6 && !player.hasEffect(ModEffects.InfernalScorch)) {
             applyInfernalScorch(player);
+            FTBHelper.completeTask((ServerPlayer) player, "45F31F2722F519BE");
         }
 
         // 第三级及以上：点燃玩家（每tick刷新）

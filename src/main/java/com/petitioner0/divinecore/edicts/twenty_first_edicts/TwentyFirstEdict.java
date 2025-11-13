@@ -1,6 +1,7 @@
 package com.petitioner0.divinecore.edicts.twenty_first_edicts;
 
 import com.petitioner0.divinecore.DivineCore;
+import com.petitioner0.divinecore.FTBHelper;
 import com.petitioner0.divinecore.blocks.ModBlocks;
 import com.petitioner0.divinecore.effects.ModEffects;
 
@@ -11,8 +12,8 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 
-@EventBusSubscriber(modid = DivineCore.MODID) 
-public class SonicBoomDeathHandler {
+@EventBusSubscriber(modid = DivineCore.MODID)
+public class TwentyFirstEdict {
 
     @SubscribeEvent
     public static void onLivingDeath(LivingDeathEvent event) {
@@ -24,12 +25,14 @@ public class SonicBoomDeathHandler {
         // Check if it is "sonic" damage (Warden's sonic_boom)
         if (source.is(DamageTypes.SONIC_BOOM)) {
             if (player.hasEffect(ModEffects.InfernalScorch) && player.hasEffect(ModEffects.FrostCorrosion)) {
-                SpherePlacer.placeSolidMixedSphere(player.level(), player.blockPosition(), 
-                ModBlocks.CRYOSTATIC_BLOCK.get().defaultBlockState(), 
-                ModBlocks.PYROSTATIC_BLOCK.get().defaultBlockState(), 
-                ModBlocks.ANTIENTROPY_CATALYST.get().defaultBlockState());
+                SpherePlacer.placeSolidMixedSphere(player.level(), player.blockPosition(),
+                        ModBlocks.CRYOSTATIC_BLOCK.get().defaultBlockState(),
+                        ModBlocks.PYROSTATIC_BLOCK.get().defaultBlockState(),
+                        ModBlocks.ANTIENTROPY_CATALYST.get().defaultBlockState());
 
+            }
+
+            FTBHelper.completeTask(player, "20926258B7B6C5D5");
         }
     }
-}
 }

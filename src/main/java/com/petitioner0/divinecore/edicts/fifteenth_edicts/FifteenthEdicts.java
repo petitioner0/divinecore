@@ -1,6 +1,7 @@
 package com.petitioner0.divinecore.edicts.fifteenth_edicts;
 
 import com.petitioner0.divinecore.DivineCore;
+import com.petitioner0.divinecore.FTBHelper;
 import com.petitioner0.divinecore.items.ItemHelper;
 
 import net.minecraft.resources.ResourceKey;
@@ -122,6 +123,12 @@ public class FifteenthEdicts {
             // Check the end of the blood moon window: the previous tick is true, the current tick is false
             if (lastBloodMoonState != null && lastBloodMoonState && !currentBloodMoonState) {
                 finalizeNight(level);
+            }
+
+            if (lastBloodMoonState != null && !lastBloodMoonState && currentBloodMoonState) {
+                for (ServerPlayer player : level.players()) {
+                    FTBHelper.completeTask(player, "02B59C7BDE6759F2");
+                }
             }
         }
     }

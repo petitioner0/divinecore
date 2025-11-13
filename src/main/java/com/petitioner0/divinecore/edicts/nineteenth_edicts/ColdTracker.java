@@ -2,9 +2,11 @@ package com.petitioner0.divinecore.edicts.nineteenth_edicts;
 
 
 import com.petitioner0.divinecore.DivineCore;
+import com.petitioner0.divinecore.FTBHelper;
 import com.petitioner0.divinecore.effects.ModEffects;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.player.Player;
@@ -32,7 +34,7 @@ import net.minecraft.world.phys.Vec2;
 public class ColdTracker {
 
     /** Base gain per tick (before coefficient multiplication) */
-    private static final double BASE_GAIN_PER_TICK = 1.0D;
+    private static final double BASE_GAIN_PER_TICK = 0.05D;
 
     private static final double MOVEMENT_DECAY_PER_BLOCK = 2.0D;
 
@@ -107,6 +109,7 @@ public class ColdTracker {
         if (biomeKey != null) {
             Double coeff = COLD_COEFFICIENTS.get(biomeKey);
             if (coeff != null) {
+                FTBHelper.completeTask((ServerPlayer) player, "23C01A3EB951457D");
                 gainThisTick = BASE_GAIN_PER_TICK * coeff;
                 
                 // When in water, cold value increases at 1.5x speed
@@ -152,6 +155,7 @@ public class ColdTracker {
         // Check if maximum threshold is reached, if so apply frost effect
         if (stage >= 6 && !player.hasEffect(ModEffects.FrostCorrosion)) {
             applyFrostCorrosion(player);
+            FTBHelper.completeTask((ServerPlayer) player, "29E3A2029CF2CD7F");
         }
 
         applyFreezingAtMaxStage(player, stage);

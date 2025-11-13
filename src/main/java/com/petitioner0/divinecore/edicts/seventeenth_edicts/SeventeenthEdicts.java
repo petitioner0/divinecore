@@ -1,6 +1,7 @@
 package com.petitioner0.divinecore.edicts.seventeenth_edicts;
 
 import com.petitioner0.divinecore.DivineCore;
+import com.petitioner0.divinecore.FTBHelper;
 import com.petitioner0.divinecore.items.ItemHelper;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.monster.ElderGuardian;
@@ -20,10 +21,13 @@ public class SeventeenthEdicts {
             return;
         }
 
+
         Entity attacker = event.getSource().getEntity();
         if (!(attacker instanceof ServerPlayer player)) {
             return; 
         }
+
+        FTBHelper.completeTask(player,"6F4CEC34C11D20AC");
 
         // Check if player has Conduit Power effect
         if (!player.hasEffect(MobEffects.CONDUIT_POWER)) {

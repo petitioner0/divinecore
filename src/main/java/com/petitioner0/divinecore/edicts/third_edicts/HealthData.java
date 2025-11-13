@@ -1,5 +1,6 @@
 package com.petitioner0.divinecore.edicts.third_edicts;
 
+import com.petitioner0.divinecore.FTBHelper;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
@@ -73,6 +74,10 @@ public final class HealthData {
     
         double base = inst.getBaseValue();
         double computed = base - penalty;
+
+        if (computed <= MIN_MAX_HEALTH) {
+            FTBHelper.completeTask(player, "3EEBD9DE74C55475");
+        }
     
         if (computed < MIN_MAX_HEALTH) {
             penalty = (int) Math.floor(base - MIN_MAX_HEALTH);

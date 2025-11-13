@@ -1,6 +1,7 @@
 package com.petitioner0.divinecore.edicts.fourth_edicts;
 
 import com.petitioner0.divinecore.DivineCore;
+import com.petitioner0.divinecore.FTBHelper;
 import com.petitioner0.divinecore.damage_type.ModDamageTypes;
 import com.petitioner0.divinecore.damage_type.ModDamageSources;
 import com.petitioner0.divinecore.items.ItemHelper;
@@ -89,8 +90,11 @@ public class FourthEdicts {
                     // Check if damage counter reaches 20
                     if (st.damageCount >= 20) {
                         checkSpecialReward((ServerPlayer) player);
+                        FTBHelper.completeTask((ServerPlayer) player, "3FC8AE20D3B26260");
                     }
                 }
+
+                FTBHelper.completeTask((ServerPlayer) player, "0C4047428C9A999B");
 
                 player.hurt(
                         ModDamageSources.of(player.level(), ModDamageTypes.RUN_EXHAUSTION),
@@ -120,6 +124,8 @@ public class FourthEdicts {
         if (player.hasEffect(MobEffects.DAMAGE_RESISTANCE)) {
             return false; 
         }
+
+        FTBHelper.completeTask((ServerPlayer) player, "74EB28288ADC9828");
 
         return true; 
     }

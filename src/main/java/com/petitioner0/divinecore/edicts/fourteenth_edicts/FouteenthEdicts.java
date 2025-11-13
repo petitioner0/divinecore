@@ -2,9 +2,11 @@ package com.petitioner0.divinecore.edicts.fourteenth_edicts;
 
 import com.petitioner0.divinecore.DivineCore;
 
+import com.petitioner0.divinecore.FTBHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -77,6 +79,8 @@ public final class FouteenthEdicts {
 
         boolean above = player.getBlockY() >= CHECK_Y_MIN;
         boolean cooling = now < st.cooldownUntil;
+
+        FTBHelper.completeTask((ServerPlayer) player, "0FA1B25EB2A2FB34");
 
         if (!above) {
             if (st.inZone) STATES.put(id, st.resetOnLeave(now));

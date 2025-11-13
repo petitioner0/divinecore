@@ -1,8 +1,10 @@
 package com.petitioner0.divinecore.edicts.thirteenth_edicts;
 
 
+import com.petitioner0.divinecore.FTBHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -69,6 +71,8 @@ public final class CropPunisher {
                     // 33% check
                     if (rand.nextFloat() <= SUCCESS_PROB) {
                         player.hurt(ModDamageSources.of(serverLevel, ModDamageTypes.CROP_PUNISHMENT), DAMAGE_AMOUNT);
+
+                        FTBHelper.completeTask((ServerPlayer) player, "663E473FB546B1AE");
 
                         tryGrowOnceAndTrack(serverLevel, pos, crop, state);
 

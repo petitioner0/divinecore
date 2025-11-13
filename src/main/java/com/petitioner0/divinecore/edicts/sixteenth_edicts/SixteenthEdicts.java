@@ -1,6 +1,7 @@
 package com.petitioner0.divinecore.edicts.sixteenth_edicts;
 
 import com.petitioner0.divinecore.DivineCore;
+import com.petitioner0.divinecore.FTBHelper;
 import com.petitioner0.divinecore.damage_type.ModDamageSources;
 import com.petitioner0.divinecore.damage_type.ModDamageTypes;
 import com.petitioner0.divinecore.items.ItemHelper;
@@ -25,6 +26,14 @@ public class SixteenthEdicts {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
 
         BlockPos pos = player.blockPosition();
+
+        if (pos.getY() <= -60) {
+            FTBHelper.completeTask(player, "42B6CCF5E4EA6612");
+        }
+
+        if (pos.getY() <= -100) {
+            FTBHelper.completeTask(player, "2FD80718A281B4AB");
+        }
 
         if (player.isDeadOrDying()) return;
 

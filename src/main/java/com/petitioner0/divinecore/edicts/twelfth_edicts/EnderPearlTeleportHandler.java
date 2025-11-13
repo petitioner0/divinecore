@@ -1,6 +1,7 @@
 package com.petitioner0.divinecore.edicts.twelfth_edicts;
 
 import com.petitioner0.divinecore.DivineCore;
+import com.petitioner0.divinecore.FTBHelper;
 import com.petitioner0.divinecore.effects.ModEffects;
 
 import net.neoforged.bus.api.SubscribeEvent;
@@ -24,7 +25,8 @@ public class EnderPearlTeleportHandler {
         double distance = event.getPrev().distanceTo(event.getTarget());
 
         if (distance >= DISTANCE_THRESHOLD) {
-            player.addEffect(new MobEffectInstance(ModEffects.Spacilabile, 800, 0, false, true, true));
+            player.addEffect(new MobEffectInstance(ModEffects.Oscillaspace, 800, 0, false, true, true));
+            FTBHelper.completeTask(player, "569A4B9A178EE02E");
 
             TwelfthEdicts.CheckAndGiveReward(player);
         }

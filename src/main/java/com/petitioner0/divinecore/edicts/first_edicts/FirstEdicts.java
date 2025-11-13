@@ -15,7 +15,6 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.FlowerPotBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.Vec3;
@@ -76,13 +75,15 @@ public class FirstEdicts {
                     playerOriginalPositions.put(playerUUID, new Vec3(player.getX(), player.getY(), player.getZ()));
                 }
 
-                // Determine the drop position: use the spawn point first, otherwise use the world spawn point
-                BlockPos dropAt = spawnPos != null
-                    ? spawnPos
-                    : serverPlayer.serverLevel().getSharedSpawnPos();
-                ItemHelper.dropItemAt(serverPlayer.serverLevel(),
-                    new Vec3(dropAt.getX(), dropAt.getY(), dropAt.getZ()),
-                    "aetherial_reverie", 1);
+                // Drop the item at the overworld spawn position mapped to the dream dimension
+                ServerLevel overworld = serverPlayer.getServer().getLevel(Level.OVERWORLD);
+                if (overworld != null) {
+                    BlockPos overworldSpawnPos = spawnPos != null
+                        ? spawnPos
+                        : overworld.getSharedSpawnPos();
+                    Vec3 dropPos = new Vec3(overworldSpawnPos.getX() + 0.5, overworldSpawnPos.getY(), overworldSpawnPos.getZ() + 0.5);
+                    ItemHelper.dropItemAt(serverPlayer.serverLevel(), dropPos, "aetherial_reverie", 1);
+                }
 
                 // Calculate and set the maximum stay time of the player
                 int maxStayTime = calculateMaxStayTime(serverPlayer);

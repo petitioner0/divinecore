@@ -1,5 +1,6 @@
 package com.petitioner0.divinecore.edicts.sixth_edicts;
 
+import com.petitioner0.divinecore.FTBHelper;
 import com.petitioner0.divinecore.items.ItemHelper;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -89,7 +90,12 @@ public class SixthEdicts {
 
         long ignoreUntil = IGNORE_UNTIL_TICK.getOrDefault(id, 0L);
         if (now < ignoreUntil) {
-            NAUSEA_KILL_COUNT.merge(id, 1, Integer::sum);
+            int newCount = NAUSEA_KILL_COUNT.merge(id, 1, Integer::sum);
+
+            // 👇 插入在这里：混乱期间击杀达到阈值的时点
+            if (newCount == REWARD_THRESHOLD) {
+                FTBHelper.completeTask(player, "35B5FC632628CFF7");
+            }
             return;
         }
 
@@ -106,6 +112,7 @@ public class SixthEdicts {
             IGNORE_UNTIL_TICK.put(id, now + NAUSEA_TICKS);
             NAUSEA_KILL_COUNT.put(id, 0); 
             deque.clear();
+            FTBHelper.completeTask(player, "6ED9E0F8BA3B599F");
         }
     }
 
@@ -141,13 +148,15 @@ public class SixthEdicts {
         while (iterator.hasNext()) {
             Map.Entry<UUID, Long> entry = iterator.next();
             UUID playerId = entry.getKey();
-            long expireTick = entry.getValue(); 
+            long expireTick = entry.getValue();
 
             if (currentTick >= expireTick) {
+                ServerPlayer player = event.getServer().getPlayerList().getPlayer(playerId);
+                FTBHelper.completeTask(player, "3A08009261C94769");
                 // Reached counting time, check kill count and give reward
                 Integer killCount = NAUSEA_KILL_COUNT.remove(playerId);
                 if (killCount != null && killCount >= REWARD_THRESHOLD) {
-                    ServerPlayer player = event.getServer().getPlayerList().getPlayer(playerId);
+
                     if (player != null) {
                         ItemHelper.giveItemToPlayer(player, "wailing_wraith", 1);
                     }

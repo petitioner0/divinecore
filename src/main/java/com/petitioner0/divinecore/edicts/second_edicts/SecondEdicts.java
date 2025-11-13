@@ -1,9 +1,11 @@
 package com.petitioner0.divinecore.edicts.second_edicts;
 
 import com.petitioner0.divinecore.DivineCore;
+import com.petitioner0.divinecore.FTBHelper;
 import com.petitioner0.divinecore.items.ItemHelper;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.neoforge.event.entity.living.MobEffectEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import net.neoforged.neoforge.event.entity.living.LivingEntityUseItemEvent;
@@ -12,9 +14,6 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.food.FoodProperties;
-import net.minecraft.world.item.UseAnim;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -26,6 +25,9 @@ public class SecondEdicts {
     private static final Map<UUID, Integer> playerHungerTimers = new HashMap<>();
     // Track whether player has been punished
     private static final Map<UUID, Boolean> playerPunished = new HashMap<>();
+    // Track hunger and saturation before eating
+    private static final Map<UUID, Integer> startHunger = new HashMap<>();
+    private static final Map<UUID, Float> startSaturation = new HashMap<>();
 
     // Punishment duration: 10 seconds = 200 ticks
     private static final int PUNISHMENT_DURATION = 200;
@@ -59,6 +61,8 @@ public class SecondEdicts {
 
         // If food level is 0 (hungry state)
         if (foodLevel <= 0) {
+
+            FTBHelper.completeTask(player, "08CB0A7D291A7D35");
             // If player hasn't been punished yet, apply punishment immediately
             if (!playerPunished.getOrDefault(playerUUID, false)) {
                 applyHungerPunishment(player);
@@ -103,55 +107,43 @@ public class SecondEdicts {
     }
 
     /**
-     * Listen to player eating completion event
+     * Listen to player eating start event
      */
     @SubscribeEvent
-    public void onEatFinish(LivingEntityUseItemEvent.Finish event) {
-        if (!(event.getEntity() instanceof ServerPlayer player))
-            return;
+    public void onFoodStart(LivingEntityUseItemEvent.Start event) {
+        if (!(event.getEntity() instanceof ServerPlayer player)) return;
 
-        ItemStack stack = event.getItem();
-        UseAnim anim = stack.getUseAnimation(); 
-        if (anim == UseAnim.EAT) {
-            if (stack.getItem().getFoodProperties(stack, player) != null) {
-                checkFoodReward(player, stack);
-            }
-        }
+
+        startHunger.put(player.getUUID(), player.getFoodData().getFoodLevel());
+        startSaturation.put(player.getUUID(), player.getFoodData().getSaturationLevel());
     }
 
     /**
-     * Check food reward conditions
+     * Listen to player eating completion event
      */
-    private void checkFoodReward(ServerPlayer player, ItemStack itemStack) {
-        UUID playerUUID = player.getUUID();
+    @SubscribeEvent
+    public void onFoodFinish(LivingEntityUseItemEvent.Finish event) {
+        if (!(event.getEntity() instanceof ServerPlayer player)) return;
 
-        // Check if player is in punishment state
-        if (!playerPunished.getOrDefault(playerUUID, false)) {
-            return;
-        }
+        int beforeHunger = startHunger.getOrDefault(player.getUUID(), player.getFoodData().getFoodLevel());
+        float beforeSaturation = startSaturation.getOrDefault(player.getUUID(), player.getFoodData().getSaturationLevel());
 
-        // Check if player still has hunger effect
-        if (!player.hasEffect(MobEffects.HUNGER)) {
-            return;
-        }
+        int afterHunger = player.getFoodData().getFoodLevel();
+        float afterSaturation = player.getFoodData().getSaturationLevel();
 
-        // Get food nutrition and saturation
-        FoodProperties food = itemStack.getItem().getFoodProperties(itemStack, player);
-        if (food == null) {
-            return;
-        }
+        int hungerDiff = afterHunger - beforeHunger;
+        float saturationDiff = afterSaturation - beforeSaturation;
+        float total = hungerDiff + saturationDiff;
 
-        int nutrition = food.nutrition();
-        float saturationModifier = food.saturation();
-
-        // Calculate total saturation (saturation = saturation modifier * nutrition)
-        float totalSaturation = saturationModifier * nutrition * 2.0f;
-
-        // Check if sum of nutrition and saturation is greater than 25
-        if (nutrition + totalSaturation > 25) {
-            // Give reward item
+        // 例如饱食度提升超过 8，就给奖励
+        if (total > 13f && player.hasEffect(MobEffects.HUNGER) && playerPunished.getOrDefault(player.getUUID(), false)) {
+            FTBHelper.completeTask(player, "2119B820111AF802");
             giveRewardItem(player);
         }
+
+        // 清理缓存
+        startHunger.remove(player.getUUID());
+        startSaturation.remove(player.getUUID());
     }
 
     /*Give reward item*/
@@ -167,5 +159,17 @@ public class SecondEdicts {
 
         playerHungerTimers.remove(playerUUID);
         playerPunished.remove(playerUUID);
+        startHunger.remove(playerUUID);
+        startSaturation.remove(playerUUID);
+    }
+
+    @SubscribeEvent
+    public void CheckHungerEffectAdded(MobEffectEvent.Added event) {
+        if (event.getEntity() instanceof ServerPlayer player) {
+            if (event.getEffectInstance().getEffect() == MobEffects.HUNGER) {
+                FTBHelper.completeTask(player, "04CCED81FB687424");
+            }
+
+        }
     }
 }

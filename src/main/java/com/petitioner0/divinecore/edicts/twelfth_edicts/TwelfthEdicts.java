@@ -1,6 +1,7 @@
 package com.petitioner0.divinecore.edicts.twelfth_edicts;
 
 import com.petitioner0.divinecore.DivineCore;
+import com.petitioner0.divinecore.FTBHelper;
 import com.petitioner0.divinecore.damage_type.ModDamageSources;
 import com.petitioner0.divinecore.damage_type.ModDamageTypes;
 import com.petitioner0.divinecore.effects.ModEffects;
@@ -25,12 +26,14 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 import net.neoforged.neoforge.event.entity.EntityLeaveLevelEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.Map;
 
 /** Only track EyeOfEnder that will "explode"; get the nearest player when it explodes */
 @EventBusSubscriber(modid = DivineCore.MODID)
@@ -38,6 +41,31 @@ public class TwelfthEdicts {
 
     /** Record EyeOfEnder that will explode */
     private static final Set<UUID> TO_SHATTER = ConcurrentHashMap.newKeySet();
+    
+    /** Track rapid teleportation sequences for players */
+    private static final Map<UUID, TeleportationTask> TELEPORTATION_TASKS = new ConcurrentHashMap<>();
+    
+    /** Task for tracking rapid teleportation sequence */
+    private static class TeleportationTask {
+        final ServerPlayer player;
+        final ServerLevel level;
+        final Vec3 origin;
+        final RandomSource random;
+        int currentTeleport;
+        int ticksUntilNextTeleport;
+        final int radius = 40;
+        final int totalTeleports = 5;
+        final int delayTicks = 5; // 5 ticks = 0.25 seconds between teleports
+        
+        TeleportationTask(ServerPlayer player, ServerLevel level, Vec3 origin) {
+            this.player = player;
+            this.level = level;
+            this.origin = origin;
+            this.random = player.getRandom();
+            this.currentTeleport = 0;
+            this.ticksUntilNextTeleport = 0; // First teleport happens immediately
+        }
+    }
 
     @SubscribeEvent
     public static void onJoin(EntityJoinLevelEvent e) {
@@ -72,7 +100,7 @@ public class TwelfthEdicts {
 
         if (nearest != null) {
             nearest.addEffect(new MobEffectInstance(ModEffects.Spacilabile, 800, 0, false, true, true));
-            
+            FTBHelper.completeTask((ServerPlayer) nearest, "155ABFC61F39FB6D");
             // Cause maximum health 50% damage (round down)
             float maxHealth = nearest.getMaxHealth();
             float damage = (float) Math.floor(maxHealth * 0.5f);
@@ -153,7 +181,7 @@ public class TwelfthEdicts {
         
         // Check the fluid state, fluids other than lava are safe
         var fluidState = state.getFluidState();
-        if (!fluidState.isEmpty() && !fluidState.is(Fluids.LAVA)) {
+        if (!fluidState.isEmpty()) {
             return true;
         }
         
@@ -170,13 +198,83 @@ public class TwelfthEdicts {
             
             // Give the player the item through detection
             if (player instanceof ServerPlayer serverPlayer) {
-                ItemHelper.giveItemToPlayer(serverPlayer, "shattered_riftstone", 1);
-                
-                // Clear all three status effects
-                serverPlayer.removeEffect(ModEffects.Spatiolysis);
-                serverPlayer.removeEffect(ModEffects.Oscillaspace);
-                serverPlayer.removeEffect(ModEffects.Spacilabile);
+                // Start rapid teleportation sequence before giving reward
+                startRapidTeleportationSequence(serverPlayer);
             }
         }
+    }
+    
+    /**
+     * Rapidly teleport the player 5 times around their current position, then return to origin and give reward
+     */
+    private static void startRapidTeleportationSequence(ServerPlayer player) {
+        if (player == null || !(player.level() instanceof ServerLevel level)) return;
+        
+        // Record original position
+        Vec3 origin = player.position();
+        
+        // Create and register teleportation task
+        TeleportationTask task = new TeleportationTask(player, level, origin);
+        TELEPORTATION_TASKS.put(player.getUUID(), task);
+    }
+    
+    /**
+     * Handle rapid teleportation sequences on server tick
+     */
+    @SubscribeEvent
+    public static void onServerTick(ServerTickEvent.Post event) {
+        if (TELEPORTATION_TASKS.isEmpty()) return;
+        
+        TELEPORTATION_TASKS.entrySet().removeIf(entry -> {
+            TeleportationTask task = entry.getValue();
+            
+            // Check if player is still valid
+            if (!task.player.isAlive() || task.player.level() != task.level) {
+                return true; // Remove invalid task
+            }
+            
+            // Decrement timer
+            if (task.ticksUntilNextTeleport > 0) {
+                task.ticksUntilNextTeleport--;
+            }
+            
+            // If it's time for next teleport (first teleport happens immediately)
+            if (task.ticksUntilNextTeleport <= 0) {
+                if (task.currentTeleport < task.totalTeleports) {
+                    // Perform teleport
+                    double angle = task.random.nextDouble() * Math.PI * 2.0;
+                    double dist = Math.sqrt(task.random.nextDouble()) * task.radius;
+                    
+                    double x = task.origin.x + dist * Math.cos(angle);
+                    double z = task.origin.z + dist * Math.sin(angle);
+                    double y = task.origin.y;
+                    
+                    // Teleport without safety checks
+                    task.player.teleportTo(task.level, x, y, z, task.random.nextFloat() * 360f, task.player.getXRot());
+                    
+                    task.currentTeleport++;
+                    // Set delay for next teleport (if not the last one)
+                    if (task.currentTeleport < task.totalTeleports) {
+                        task.ticksUntilNextTeleport = task.delayTicks;
+                    }
+                } else {
+                    // All teleports done, return to origin and give reward
+                    task.player.teleportTo(task.level, task.origin.x, task.origin.y, task.origin.z, 
+                                          task.player.getYRot(), task.player.getXRot());
+                    
+                    // Give reward
+                    ItemHelper.giveItemToPlayer(task.player, "shattered_riftstone", 1);
+                    
+                    // Clear all three status effects
+                    task.player.removeEffect(ModEffects.Spatiolysis);
+                    task.player.removeEffect(ModEffects.Oscillaspace);
+                    task.player.removeEffect(ModEffects.Spacilabile);
+                    
+                    return true; // Remove completed task
+                }
+            }
+            
+            return false; // Keep task
+        });
     }
 }

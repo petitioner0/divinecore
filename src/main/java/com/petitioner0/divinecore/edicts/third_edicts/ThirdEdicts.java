@@ -1,5 +1,6 @@
 package com.petitioner0.divinecore.edicts.third_edicts;
 
+import com.petitioner0.divinecore.FTBHelper;
 import com.petitioner0.divinecore.items.ItemHelper;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffects;
@@ -11,6 +12,7 @@ import net.minecraft.world.item.UseAnim;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.entity.living.LivingEntityUseItemEvent;
+import net.neoforged.neoforge.event.entity.living.MobEffectEvent;
 
 public class ThirdEdicts {
 
@@ -32,6 +34,7 @@ public class ThirdEdicts {
         if (anim == UseAnim.EAT) {
             // Check if it is a golden apple or enchanted golden apple
             if (stack.is(Items.GOLDEN_APPLE)) {
+                FTBHelper.completeTask(player, "13A4005FFEADF6AA");
                 checkGoldenAppleReward(player);
             }
         }
@@ -54,12 +57,22 @@ public class ThirdEdicts {
         // Check if the player's maximum health is equal to 1.0 (half a heart)
         if (Math.abs(maxHealth - 1.0) < 0.001) { // Use a small error value to compare floating point numbers
             // Conditions met, give reward item
-            giveGoldenAppleReward(player);
+            giveReward(player);
         }
     }
 
-    private void giveGoldenAppleReward(ServerPlayer player) {
+    private void giveReward(ServerPlayer player) {
         if (ItemHelper.giveItemToPlayer(player, "shard_of_the_soul", 1)) {
+        }
+    }
+
+    @SubscribeEvent
+    public void CheckWeakEffectAdded(MobEffectEvent.Added event) {
+        if (event.getEntity() instanceof ServerPlayer player) {
+            if (event.getEffectInstance().getEffect() == MobEffects.WEAKNESS) {
+                FTBHelper.completeTask(player, "15F2DCBA57A9FA80");
+            }
+
         }
     }
 }
