@@ -100,6 +100,8 @@
   "death.attack.wither.player": "%1$s, battling fiercely with %2$s, was consumed by the withering curse, their light extinguished.",
   "death.attack.witherSkull": "%1$s was struck down by the cursed skull of %2$s, their soul unraveled in shadow.",
   "death.attack.witherSkull.item": "%1$s was obliterated by the cursed skull unleashed by %2$s through %3$s, their spirit scattered into the darkness.",
+  "death.attack.sacrificial_verdant": "%1$s was consumed by the Sacrificial Verdant, their final breath buried beneath the whispering earth.",
+  "death.attack.sacrificial_verdant.player": "%1$s was offered to the Sacrificial Verdant by %2$s, their lifelines severed as the green tide rose to claim them.",
   "death.fell.accident.generic": "%1$s was cast down from the high heavens, their bones shattered upon the unyielding earth.",
   "death.fell.accident.ladder": "%1$s fell from the lofty ladder, their mortal frame broken upon the ground below.",
   "death.fell.accident.other_climbable": "%1$s fell while climbing, and fate, ever merciless, claimed their final breath.",
