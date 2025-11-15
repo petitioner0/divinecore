@@ -2,26 +2,25 @@ package com.petitioner0.divinecore.edicts.sixth_edicts;
 
 import com.petitioner0.divinecore.FTBHelper;
 import com.petitioner0.divinecore.items.ItemHelper;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.level.Level;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import org.jetbrains.annotations.Nullable;
-import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.entity.monster.Enemy;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.phys.Vec3;
+
 import java.util.*;
-import net.neoforged.bus.api.IEventBus;
-import net.neoforged.bus.api.SubscribeEvent;
 
 public class SixthEdicts {
 
@@ -29,25 +28,24 @@ public class SixthEdicts {
         gameEventBus.register(SixthEdicts.class);
     }
 
-    // Kill timestamps within the last 20 seconds
     private static final Map<UUID, ArrayDeque<Long>> KILL_TIMESTAMPS = new HashMap<>();
-    // Cooldown expiration tick for "not counting during nausea period" (regardless of whether effect is removed early)
     private static final Map<UUID, Long> IGNORE_UNTIL_TICK = new HashMap<>();
-    // Kill count statistics during nausea period
     private static final Map<UUID, Integer> NAUSEA_KILL_COUNT = new HashMap<>();
+
+    private static final Map<UUID, Map<EntityType<?>, Integer>> WINDOW_KILL_TYPES = new HashMap<>();
+    private static final Map<UUID, Map<EntityType<?>, Integer>> FROZEN_POOL = new HashMap<>();
+
+    // 新增：击杀累积窗口结束 tick
+    private static final Map<UUID, Long> WINDOW_END_TICK = new HashMap<>();
 
     private static final int WINDOW_SECONDS = 20;
     private static final int WINDOW_TICKS = WINDOW_SECONDS * 20;
+    private static final int EXTRA_TIME_PER_KILL = 60; // 3 秒
+
     private static final int REQUIRED_KILLS = 10;
     private static final int NAUSEA_SECONDS = 30;
     private static final int NAUSEA_TICKS = NAUSEA_SECONDS * 20;
-    private static final int REWARD_THRESHOLD = 15; // Kill 15 monsters during nausea period to get reward
-
-    private static final double DUPLICATE_PROB = 0.7; // 70% probability
-    private static final int DUP_RADIUS = 24; // Radius around player for detection (in blocks)
-    private static final int MAX_DUP_DEPTH = 7; // Maximum level for iterative duplication (to avoid runaway)
-    private static final double DUP_OFFSET_MAX = 2.0; // Maximum duplication offset
-    private static final String NBT_DUP_DEPTH_KEY = "divinecore_dup_depth";
+    private static final int REWARD_THRESHOLD = 15;
 
     private static @Nullable ServerPlayer getKillerAsPlayer(Entity direct) {
         if (direct instanceof ServerPlayer sp)
@@ -62,7 +60,6 @@ public class SixthEdicts {
                 return sp2;
             }
         }
-
         return null;
     }
 
@@ -72,47 +69,71 @@ public class SixthEdicts {
         if (!(victim instanceof Monster))
             return;
 
-        Entity src = event.getSource().getEntity();
-        ServerPlayer player = getKillerAsPlayer(src);
-        if (player == null)
-            return;
+        ServerPlayer player = getKillerAsPlayer(event.getSource().getEntity());
+        if (player == null) return;
 
         Level level = player.level();
-        if (level.isClientSide())
-            return;
+        if (level.isClientSide()) return;
 
         var server = level.getServer();
-        if (server == null)
-            return;
+        if (server == null) return;
 
         long now = server.overworld().getGameTime();
         UUID id = player.getUUID();
 
+        // --- 处于反胃期间，只计数 ---
         long ignoreUntil = IGNORE_UNTIL_TICK.getOrDefault(id, 0L);
         if (now < ignoreUntil) {
             int newCount = NAUSEA_KILL_COUNT.merge(id, 1, Integer::sum);
-
-            // 👇 插入在这里：混乱期间击杀达到阈值的时点
             if (newCount == REWARD_THRESHOLD) {
                 FTBHelper.completeTask(player, "35B5FC632628CFF7");
             }
             return;
         }
 
+        // --- 正常击杀（用于 10 杀进入反胃） ---
         ArrayDeque<Long> deque = KILL_TIMESTAMPS.computeIfAbsent(id, k -> new ArrayDeque<>());
-
         deque.addLast(now);
-        long cutoff = now - WINDOW_TICKS;
-        while (!deque.isEmpty() && deque.peekFirst() < cutoff)
-            deque.pollFirst();
 
+        // ---- 窗口结束 tick 初始化或延长 ----
+        long windowEnd = WINDOW_END_TICK.getOrDefault(id, now + WINDOW_TICKS);
+        windowEnd += EXTRA_TIME_PER_KILL;
+        WINDOW_END_TICK.put(id, windowEnd);
+
+        // --- 如果窗口已过期，清空 ---
+        if (now > windowEnd) {
+            deque.clear();
+            WINDOW_KILL_TYPES.remove(id);
+            return;
+        }
+
+        // --- 记录怪物类型（窗口有效时） ---
+        WINDOW_KILL_TYPES
+                .computeIfAbsent(id, k -> new HashMap<>())
+                .merge(victim.getType(), 1, Integer::sum);
+
+        // --- 达成 10 杀，进入反胃 ---
         if (deque.size() >= REQUIRED_KILLS) {
+
+            // 冻结池
+            Map<EntityType<?>, Integer> types = WINDOW_KILL_TYPES.remove(id);
+            if (types == null || types.isEmpty()) {
+                FROZEN_POOL.put(id, Map.of());
+            } else {
+                FROZEN_POOL.put(id, new HashMap<>(types));
+            }
+
             player.addEffect(new MobEffectInstance(MobEffects.CONFUSION, NAUSEA_TICKS, 0, false, true, true));
             player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, NAUSEA_TICKS, 2, false, true, true));
+
             IGNORE_UNTIL_TICK.put(id, now + NAUSEA_TICKS);
-            NAUSEA_KILL_COUNT.put(id, 0); 
+            NAUSEA_KILL_COUNT.put(id, 0);
+
+            // 清理窗口
+            WINDOW_END_TICK.remove(id);
             deque.clear();
-            FTBHelper.completeTask(player, "6ED9E0F8BA3B599F");
+
+            FTBHelper.completeTask(player, "1BCD2EA2DB9C7253");
         }
     }
 
@@ -123,6 +144,9 @@ public class SixthEdicts {
             KILL_TIMESTAMPS.remove(id);
             IGNORE_UNTIL_TICK.remove(id);
             NAUSEA_KILL_COUNT.remove(id);
+            WINDOW_KILL_TYPES.remove(id);
+            FROZEN_POOL.remove(id);
+            WINDOW_END_TICK.remove(id);
         }
     }
 
@@ -133,88 +157,84 @@ public class SixthEdicts {
             KILL_TIMESTAMPS.remove(id);
             IGNORE_UNTIL_TICK.remove(id);
             NAUSEA_KILL_COUNT.remove(id);
+            WINDOW_KILL_TYPES.remove(id);
+            FROZEN_POOL.remove(id);
+            WINDOW_END_TICK.remove(id);
         }
     }
 
     @SubscribeEvent
     public static void onServerTick(final ServerTickEvent.Post event) {
-        if (event.getServer().getTickCount() % 20 != 0)
-            return; 
-
         long currentTick = event.getServer().overworld().getGameTime();
 
-        // Check all players' timers
+        // --- 反胃期间刷怪 ---
+        for (ServerPlayer player : event.getServer().getPlayerList().getPlayers()) {
+            UUID id = player.getUUID();
+            long ignoreUntil = IGNORE_UNTIL_TICK.getOrDefault(id, 0L);
+            if (currentTick >= ignoreUntil) continue;
+
+            Map<EntityType<?>, Integer> pool = FROZEN_POOL.get(id);
+            if (pool == null || pool.isEmpty()) continue;
+
+            ServerLevel level = player.serverLevel();
+
+            if (level.getRandom().nextDouble() > 0.10) continue;
+
+            EntityType<?> type = chooseWeighted(pool, level.getRandom());
+            if (type == null) continue;
+
+            int px = player.blockPosition().getX();
+            int py = player.blockPosition().getY();
+            int pz = player.blockPosition().getZ();
+
+            int x = px + level.getRandom().nextInt(5) - 2;
+            int z = pz + level.getRandom().nextInt(5) - 2;
+
+            for (int i = 0; i < 3; i++) {
+                BlockPos pos = new BlockPos(x, py + i, z);
+                if (level.isEmptyBlock(pos)) {
+                    Entity mob = type.create(level);
+                    if (mob != null) {
+                        mob.moveTo(x + 0.5, py + i, z + 0.5, level.getRandom().nextFloat() * 360F, 0);
+                        level.addFreshEntity(mob);
+                    }
+                    break;
+                }
+            }
+        }
+
+        // --- 反胃结束、结算奖励 ---
         Iterator<Map.Entry<UUID, Long>> iterator = IGNORE_UNTIL_TICK.entrySet().iterator();
         while (iterator.hasNext()) {
-            Map.Entry<UUID, Long> entry = iterator.next();
+            var entry = iterator.next();
             UUID playerId = entry.getKey();
             long expireTick = entry.getValue();
 
             if (currentTick >= expireTick) {
                 ServerPlayer player = event.getServer().getPlayerList().getPlayer(playerId);
-                FTBHelper.completeTask(player, "3A08009261C94769");
-                // Reached counting time, check kill count and give reward
-                Integer killCount = NAUSEA_KILL_COUNT.remove(playerId);
-                if (killCount != null && killCount >= REWARD_THRESHOLD) {
 
-                    if (player != null) {
-                        ItemHelper.giveItemToPlayer(player, "wailing_wraith", 1);
-                    }
+                FTBHelper.completeTask(player, "3A08009261C94769");
+
+                Integer killCount = NAUSEA_KILL_COUNT.remove(playerId);
+                if (killCount != null && killCount >= REWARD_THRESHOLD && player != null) {
+                    ItemHelper.giveItemToPlayer(player, "wailing_wraith", 1);
                 }
+
+                FROZEN_POOL.remove(playerId);
                 iterator.remove();
             }
         }
     }
 
-    @SubscribeEvent
-    public static void onEntityJoinLevel(final EntityJoinLevelEvent event) {
-        if (event.getLevel().isClientSide())
-            return;
+    private static EntityType<?> chooseWeighted(Map<EntityType<?>, Integer> pool, RandomSource rnd) {
+        int total = pool.values().stream().mapToInt(i -> i).sum();
+        if (total <= 0) return null;
 
-        if (event.loadedFromDisk())
-            return;
-        if (!(event.getEntity() instanceof Enemy))
-            return;
-
-        Entity entity = event.getEntity();
-        ServerLevel level = (ServerLevel) event.getLevel();
-
-        // Only consider duplication when there are players in "nausea window" nearby
-        long now = level.getServer().overworld().getGameTime(); 
-        boolean nearActivePlayer = level.players().stream().anyMatch(p -> {
-            if (!(p instanceof ServerPlayer sp))
-                return false;
-            if (sp.distanceToSqr(entity) > (double) DUP_RADIUS * DUP_RADIUS)
-                return false;
-            long ignoreUntil = IGNORE_UNTIL_TICK.getOrDefault(sp.getUUID(), 0L);
-            return now < ignoreUntil;
-        });
-        if (!nearActivePlayer)
-            return;
-
-        // Read current entity's duplication level
-        CompoundTag data = entity.getPersistentData();
-        int depth = data.getInt(NBT_DUP_DEPTH_KEY);
-        if (depth >= MAX_DUP_DEPTH)
-            return;
-
-        if (level.getRandom().nextDouble() >= DUPLICATE_PROB)
-            return;
-
-        EntityType<?> type = entity.getType();
-        Entity dup = type.create(level);
-        if (dup == null)
-            return;
-
-        // Random slight offset
-        double dx = (level.getRandom().nextDouble() * 2 - 1) * DUP_OFFSET_MAX;
-        double dz = (level.getRandom().nextDouble() * 2 - 1) * DUP_OFFSET_MAX;
-        Vec3 pos = entity.position().add(dx, 0, dz);
-        dup.moveTo(pos.x, pos.y, pos.z, entity.getYRot(), entity.getXRot());
-
-        // Mark duplication depth +1, allow further iteration
-        dup.getPersistentData().putInt(NBT_DUP_DEPTH_KEY, depth + 1);
-
-        level.addFreshEntity(dup);
+        int r = rnd.nextInt(total);
+        for (var e : pool.entrySet()) {
+            r -= e.getValue();
+            if (r < 0) return e.getKey();
+        }
+        return null;
     }
 }
