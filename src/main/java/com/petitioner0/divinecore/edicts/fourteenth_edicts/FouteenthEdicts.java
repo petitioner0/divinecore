@@ -80,13 +80,16 @@ public final class FouteenthEdicts {
         boolean above = player.getBlockY() >= CHECK_Y_MIN;
         boolean cooling = now < st.cooldownUntil;
 
-        FTBHelper.completeTask((ServerPlayer) player, "0FA1B25EB2A2FB34");
+
 
         if (!above) {
             if (st.inZone) STATES.put(id, st.resetOnLeave(now));
             else STATES.put(id, st.idleCooldown());
             return;
         }
+
+        FTBHelper.completeTask((ServerPlayer) player, "0FA1B25EB2A2FB34");
+
         if (cooling) {
             STATES.put(id, st.idleCooldown());
             return;
