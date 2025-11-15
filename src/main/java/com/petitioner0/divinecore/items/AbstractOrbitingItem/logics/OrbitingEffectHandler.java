@@ -42,6 +42,7 @@ public class OrbitingEffectHandler {
             OrbitingEffectHandler.registerLogic(ModItems.AETHERIAL_REVERIE.get(), new AetheriaReverieLogic());
             OrbitingEffectHandler.registerLogic(ModItems.SHARD_OF_THE_SOUL.get(), new ShardOfTheSoulLogic());
             OrbitingEffectHandler.registerLogic(ModItems.SHATTERED_RIFTSTONE.get(), new ShatteredRiftstoneLogic());
+            OrbitingEffectHandler.registerLogic(ModItems.SACRIFICIAL_VERDANT.get(), new SacrificialVerdantLogic());
             /*OrbitingEffectHandler.registerLogic(ModItems.FRAGMENT_OF_NIHIL.get(), new FragmentOfNihilLogic());
             OrbitingEffectHandler.registerLogic(ModItems.PRIMORDIAL_SHATTERER.get(), new PrimordialShattererLogic());
             OrbitingEffectHandler.registerLogic(ModItems.ULTIMATE_FULFILLMENT.get(), new UltimateFulfillmentLogic());
@@ -52,14 +53,12 @@ public class OrbitingEffectHandler {
             OrbitingEffectHandler.registerLogic(ModItems.SUNDERED_GLOOM.get(), new SunderedGloomLogic());
             OrbitingEffectHandler.registerLogic(ModItems.EMBER_OF_THE_SUNFORGED.get(), new EmberOfTheSunforgedLogic());
             OrbitingEffectHandler.registerLogic(ModItems.NETHERWYRM_COVENANT_CORE.get(), new NetherwyrmCovenantCoreLogic());
-            OrbitingEffectHandler.registerLogic(ModItems.SACRIFICIAL_VERDANT.get(), new SacrificialVerdantLogic());
             OrbitingEffectHandler.registerLogic(ModItems.AURUM_OF_THE_FIRMAMENT.get(), new AurumOfTheFirmamentLogic());
             OrbitingEffectHandler.registerLogic(ModItems.MIMIC_MALEDICTION.get(), new MimicMaledictionLogic());
             OrbitingEffectHandler.registerLogic(ModItems.CRIMSON_BLOODCRYSTAL.get(), new CrimsonBloodcrystalLogic());
             OrbitingEffectHandler.registerLogic(ModItems.HEART_OF_THE_ABYSSAL_MAW.get(), new HeartOfTheAbyssalMawLogic());
             OrbitingEffectHandler.registerLogic(ModItems.WHISPER_OF_THE_VOID.get(), new WhisperOfTheVoidLogic());
             OrbitingEffectHandler.registerLogic(ModItems.ASHLUNG_RELIC.get(), new AshlungRelicLogic());
-            OrbitingEffectHandler.registerLogic(ModItems.EVERBLOOM.get(), new EverbloomLogic());
             OrbitingEffectHandler.registerLogic(ModItems.BLOOD_OF_THE_FROST_CORROSION.get(), new BloodOfTheFrostCorrosionLogic());
             OrbitingEffectHandler.registerLogic(ModItems.BLOOD_OF_THE_INFERNAL_SCORCH.get(), new BloodOfTheInfernalScorchLogic());
             OrbitingEffectHandler.registerLogic(ModItems.ORIGIN_OF_FORM_AND_ESSENCE.get(), new OriginOfFormAndEssenceLogic());
