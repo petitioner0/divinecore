@@ -10,31 +10,34 @@ import com.petitioner0.divinecore.DivineCore;
 @EventBusSubscriber(modid = DivineCore.MODID)
 public class WeatherReplaceModule {
 
-    private static boolean wasThundering = false;
-
     @SubscribeEvent
     public static void onLevelTick(LevelTickEvent.Post event) {
-        if (!(event.getLevel() instanceof ServerLevel level))
+        if (!(event.getLevel() instanceof ServerLevel level)) {
             return;
-
-        boolean raining = level.isRaining();
-        boolean thundering = level.isThundering();
-
-        // 只在当前是雨、之前不是雷时触发一次
-        if (raining && !thundering && !wasThundering) {
-            ServerLevelData data = (ServerLevelData) level.getLevelData();
-            int clearLeft = data.getClearWeatherTime();
-            int rainLeft = data.getRainTime();
-            if (rainLeft <= 0)
-                rainLeft = 1;
-
-            level.setWeatherParameters(clearLeft, rainLeft, true, true);
-            wasThundering = true; // 标记进入雷暴状态
         }
 
-        // 当停止下雨后，重置状态
-        if (!raining) {
-            wasThundering = false;
+        // 不是下雨，直接无视
+        if (!level.isRaining()) {
+            return;
         }
+
+        // 已经是雷暴了，也不需要管
+        if (level.isThundering()) {
+            return;
+        }
+
+        // 这里开始：把“纯雨”替换成“等长雷暴”
+        ServerLevelData data = (ServerLevelData) level.getLevelData();
+
+        int rainTime = data.getRainTime();
+        if (rainTime <= 0) {
+            // 理论上很少出现 <= 0，这里兜底，至少给 1 tick
+            rainTime = 1;
+        }
+
+        // 保持当前的雨时长不变，只把雷暴时间改成和雨一样
+        data.setRaining(true);            // 本来就是 true，再写一遍也没关系
+        data.setThundering(true);         // 开启雷暴
+        data.setThunderTime(rainTime);    // 雷暴持续时间 = 当前雨剩余时间
     }
 }
