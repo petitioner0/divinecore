@@ -57,7 +57,7 @@ public class PunishCropLootModifier extends LootModifier {
         Integer times = levelMap.get(pos);
         if (times == null || times <= 0) return generatedLoot;
 
-        double p = Math.min(1.0, 0.03 * times);
+        double p = Math.min(1.0, 0.003 * times);
         RandomSource rand = ctx.getRandom();
         if (rand.nextDouble() < p) {
             generatedLoot.add(new ItemStack(ItemHelper.getItemByName("sacrificial_verdant").get(), 1)); 
