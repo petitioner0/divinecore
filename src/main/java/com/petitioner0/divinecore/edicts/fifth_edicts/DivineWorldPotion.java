@@ -80,11 +80,13 @@ public class DivineWorldPotion {
     }
 
     private static DivineSaved getOrCreateData(ServerLevel level) {
-        DimensionDataStorage storage = level.getDataStorage();
+        ServerLevel overworld = level.getServer().getLevel(Level.OVERWORLD);
+        if (overworld == null) overworld = level; // 兜底
+        DimensionDataStorage storage = overworld.getDataStorage();
         return storage.computeIfAbsent(
                 new SavedData.Factory<>(
-                        DivineSaved::new, 
-                        (tag, provider) -> DivineSaved.load(tag) 
+                        DivineSaved::new,
+                        (tag, provider) -> DivineSaved.load(tag)
                 ),
                 DivineSaved.KEY);
     }

@@ -14,7 +14,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.alchemy.Potion;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BrewingStandBlockEntity;
@@ -36,7 +35,7 @@ public abstract class FifthEdicts {
         if (!(level instanceof ServerLevel serverLevel)) return;
         MinecraftServer server = serverLevel.getServer();
 
-        // 所有玩家完成基础任务
+        // 玩家完成基础任务
         for (ServerPlayer player : serverLevel.getServer().getPlayerList().getPlayers()) {
             FTBHelper.completeTask(player, "53C8B1EA7CDBF967");
         }
@@ -73,68 +72,85 @@ public abstract class FifthEdicts {
 
         if (!shouldExplode) return;
 
-        // 检测是否包含被选中的药水（改进版）
+        // ================= 检测是否包含被选中的药水（带详细日志） =================
         boolean containsChosenPotion = false;
         ResourceLocation chosenId = DivineWorldPotion.getChosenPotionId(serverLevel);
+
         if (chosenId != null) {
-            for (int i = 0; i < 3; i++) {
-                ItemStack potionStack = items.get(i);
-                var contents = potionStack.get(DataComponents.POTION_CONTENTS);
-                if (contents == null) continue;
-
-                var holderOpt = contents.potion();
-                if (holderOpt.isEmpty()) continue;
-
-                var holder = holderOpt.get();
-                var keyOpt = holder.unwrapKey();
-
-                if (keyOpt.isPresent()) {
-                    ResourceLocation potionId = keyOpt.get().location();
-                    if (chosenId.equals(potionId)) {
-                        containsChosenPotion = true;
-                        DivineCore.LOGGER.debug("[DivineCore] 检测到被选中的药水: {}", potionId);
-                        break;
-                    }
-                } else {
-                    DivineCore.LOGGER.debug("[DivineCore] 无注册键药水: {}", holder.value());
-                }
-            }
+            DivineCore.LOGGER.info("[DivineCore] 当前世界选中的药水为: {}", chosenId);
         } else {
             DivineCore.LOGGER.warn("[DivineCore] 世界中未找到选中的药水 ID");
+        }
+
+        for (int i = 0; i < 3; i++) {
+            ItemStack potionStack = items.get(i);
+            var contents = potionStack.get(DataComponents.POTION_CONTENTS);
+            if (contents == null) {
+                DivineCore.LOGGER.debug("[DivineCore] 槽位 {}: 无药水内容", i);
+                continue;
+            }
+
+            var holderOpt = contents.potion();
+            if (holderOpt.isEmpty()) {
+                DivineCore.LOGGER.debug("[DivineCore] 槽位 {}: POTION_CONTENTS 为空", i);
+                continue;
+            }
+
+            var holder = holderOpt.get();
+            var keyOpt = holder.unwrapKey();
+
+            if (keyOpt.isPresent()) {
+                ResourceLocation potionId = keyOpt.get().location();
+                DivineCore.LOGGER.info("[DivineCore] 槽位 {} 获取到药水键: {}", i, potionId);
+
+                if (chosenId != null && chosenId.equals(potionId)) {
+                    containsChosenPotion = true;
+                    DivineCore.LOGGER.info("[DivineCore] 槽位 {} 匹配被选中的药水: {}", i, potionId);
+                    break;
+                }
+            } else {
+                DivineCore.LOGGER.debug("[DivineCore] 槽位 {} 药水无注册键，类型: {}", i, holder.value());
+            }
+        }
+
+        if (!containsChosenPotion) {
+            DivineCore.LOGGER.info("[DivineCore] 三个药水中未发现匹配的被选中药水");
         }
 
         // 清空酿造台内容（立即清空）
         for (int i = 0; i < 5; i++) items.set(i, ItemStack.EMPTY);
 
+        serverLevel.playSound(null, pos, SoundEvents.GLASS_BREAK, SoundSource.BLOCKS, 1.0F, 1.0F);
+
+        // 爆炸
+        serverLevel.explode(
+                null,
+                pos.getX() + 0.5,
+                pos.getY() + 0.5,
+                pos.getZ() + 0.5,
+                1.0F,
+                Level.ExplosionInteraction.BLOCK
+        );
+
+        // 完成任务
+        for (ServerPlayer player : serverLevel.getServer().getPlayerList().getPlayers()) {
+            FTBHelper.completeTask(player, "24D5AAF7C16C26BF");
+        }
+
+
         final boolean chosen = containsChosenPotion;
-
-
-        // 延迟一 tick 后替换方块为空气并爆炸，防止被原版逻辑覆盖
         serverLevel.getServer().execute(() -> {
             if (!serverLevel.isLoaded(pos)) return;
 
-            // 若此时方块仍为酿造台，则替换为空气
-            if (serverLevel.getBlockState(pos).getBlock() == Blocks.BREWING_STAND) {
-                serverLevel.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
-            }
-
-            // 播放音效与爆炸效果
-            serverLevel.playSound(null, pos, SoundEvents.GLASS_BREAK, SoundSource.BLOCKS, 1.0F, 1.0F);
-            serverLevel.explode(null,
-                    pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5,
-                    1.0F, Level.ExplosionInteraction.BLOCK);
-
-            // 完成任务
-            for (ServerPlayer player : serverLevel.getServer().getPlayerList().getPlayers()) {
-                FTBHelper.completeTask(player, "24D5AAF7C16C26BF");
-            }
-
-            // 若包含被选中的药水，掉落 mystic_essence
             if (chosen) {
-                serverLevel.getServer().execute(() -> ItemHelper.dropItemAt(
+                DivineCore.LOGGER.info("[DivineCore]掉落 mystic_essence");
+
+                ItemHelper.dropItemAt(
                         serverLevel,
                         new Vec3(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5),
-                        "mystic_essence", 1));
+                        "mystic_essence",
+                        1
+                );
             } else {
                 DivineCore.LOGGER.info("[DivineCore] 药水被摧毁，但不包含被选中的药水");
             }
