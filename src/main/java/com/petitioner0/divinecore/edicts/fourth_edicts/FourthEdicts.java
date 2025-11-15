@@ -146,11 +146,11 @@ public class FourthEdicts {
         }
 
         if (hasGlassBottle && glassBottleStack != null) {
-            // Remove one glass bottle
+            // Remove one glass bottle-
             glassBottleStack.shrink(1);
 
             // Give mod item
-            ItemHelper.giveItemToPlayer(player, "shard_of_the_soul", 1);
+            ItemHelper.giveItemToPlayer(player, "indomitable_will", 1);
 
             DivineCore.LOGGER.info("玩家 {} 因跑步疲劳达到20点伤害并满足特殊条件获得奖励物品",
                     player.getName().getString());
