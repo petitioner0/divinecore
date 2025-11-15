@@ -1,5 +1,8 @@
 package com.petitioner0.divinecore;
 
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.PathPackResources;
+import net.neoforged.neoforge.event.AddPackFindersEvent;
 import org.slf4j.Logger;
 
 import com.mojang.logging.LogUtils;
@@ -30,6 +33,11 @@ import com.petitioner0.divinecore.effects.ModEffects;
 import com.petitioner0.divinecore.entities.ModEntities;
 import com.petitioner0.divinecore.items.ModItems;
 import com.petitioner0.divinecore.items.AbstractOrbitingItem.logics.OrbitingEffectHandler;
+
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.packs.PackType;
+import net.minecraft.server.packs.repository.Pack;
+import net.minecraft.server.packs.repository.PackSource;
 
 // The value here should match an entry in the META-INF/neoforge.mods.toml file
 @Mod(DivineCore.MODID)
@@ -73,8 +81,33 @@ public class DivineCore {
         
         modEventBus.addListener(this::onCommonSetup);
 
+        modEventBus.addListener(this::onAddPackFinders);
+
     }
-    
+
+    private void onAddPackFinders(AddPackFindersEvent event) {
+        // 只对客户端资源仓库注册（资源包，而不是数据包）
+        if (event.getPackType() != PackType.CLIENT_RESOURCES) {
+            return;
+        }
+
+        ResourceLocation packLocation = ResourceLocation.fromNamespaceAndPath(
+                MODID,
+                "resourcepacks/divinecore_lang"
+        );
+
+        event.addPackFinders(
+                packLocation,
+                PackType.CLIENT_RESOURCES,
+                Component.literal("DivineCore 语言覆盖包"),
+                PackSource.BUILT_IN,
+                false,                // alwaysActive = true → 永远启用，玩家不能关
+                Pack.Position.TOP    // 放在最上层，覆盖所有其他资源包/模组资源
+        );
+
+        LOGGER.info("[DivineCore] 已注册内置资源包：{}", packLocation);
+    }
+
     private void onCommonSetup(final FMLCommonSetupEvent event) {
         event.enqueueWork(() -> {
             OrbitingEffectHandler.registerOrbitingLogics();
