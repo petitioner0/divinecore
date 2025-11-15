@@ -21,6 +21,9 @@ public final class ModDamageTypes {
     // Sixteenth Edict - Whisper of the Void damage
     public static final ResourceKey<DamageType> WHISPER_OF_THE_VOID = key("whisper_of_the_void");
 
+    // Thirteenth Edict - Sacrificial Verdant damage
+    public static final ResourceKey<DamageType> SACRIFICIAL_VERDANT = key("sacrificial_verdant");
+
     private static ResourceKey<DamageType> key(String path) {
         return ResourceKey.create(Registries.DAMAGE_TYPE,
                 ResourceLocation.fromNamespaceAndPath("divinecore", path));
