@@ -14,6 +14,8 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.world.food.FoodProperties;
+import net.minecraft.world.item.ItemStack;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -107,43 +109,33 @@ public class SecondEdicts {
     }
 
     /**
-     * Listen to player eating start event
-     */
-    @SubscribeEvent
-    public void onFoodStart(LivingEntityUseItemEvent.Start event) {
-        if (!(event.getEntity() instanceof ServerPlayer player)) return;
-
-
-        startHunger.put(player.getUUID(), player.getFoodData().getFoodLevel());
-        startSaturation.put(player.getUUID(), player.getFoodData().getSaturationLevel());
-    }
-
-    /**
      * Listen to player eating completion event
      */
     @SubscribeEvent
     public void onFoodFinish(LivingEntityUseItemEvent.Finish event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
 
-        int beforeHunger = startHunger.getOrDefault(player.getUUID(), player.getFoodData().getFoodLevel());
-        float beforeSaturation = startSaturation.getOrDefault(player.getUUID(), player.getFoodData().getSaturationLevel());
+        ItemStack stack = event.getItem();
+        UUID uuid = player.getUUID();
 
-        int afterHunger = player.getFoodData().getFoodLevel();
-        float afterSaturation = player.getFoodData().getSaturationLevel();
+        FoodProperties props = stack.getItem().getFoodProperties(stack, player);
+        if (props == null) return;
 
-        int hungerDiff = afterHunger - beforeHunger;
-        float saturationDiff = afterSaturation - beforeSaturation;
-        float total = hungerDiff + saturationDiff;
+        int nutrition = props.nutrition();
+        float saturation = props.saturation(); // 这是最终饱和度，不是 modifier！
 
-        // 例如饱食度提升超过 8，就给奖励
-        if (total > 13f && player.hasEffect(MobEffects.HUNGER) && playerPunished.getOrDefault(player.getUUID(), false)) {
+        float value = nutrition + saturation;
+
+        DivineCore.LOGGER.info("食物={} 营养={} 饱和度={} 价值={}",
+                stack.getItem(), nutrition, saturation, value);
+
+        if (value > 13f
+                && playerPunished.getOrDefault(uuid, false)
+                && player.hasEffect(MobEffects.HUNGER)) {
+
             FTBHelper.completeTask(player, "2119B820111AF802");
             giveRewardItem(player);
         }
-
-        // 清理缓存
-        startHunger.remove(player.getUUID());
-        startSaturation.remove(player.getUUID());
     }
 
     /*Give reward item*/
