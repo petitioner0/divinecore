@@ -44,7 +44,6 @@ public final class CropPunisher {
     private static final int CLEANUP_INTERVAL_TICKS = 100; 
 
     private CropPunisher() {}
-
     @SubscribeEvent
     public static void onLivingDamagedPost(LivingDamageEvent.Post event) {
         LivingEntity target = event.getEntity();
@@ -52,35 +51,45 @@ public final class CropPunisher {
         Level level = player.level();
         if (!(level instanceof ServerLevel serverLevel)) return;
 
+        if (!player.isAlive() || player.isRemoved() || player.isDeadOrDying() || player.getHealth() <= 0.0F) {
+            return;
+        }
+
         final BlockPos base = player.blockPosition();
         final int minY = Mth.clamp(base.getY() - 1, level.getMinBuildHeight(), level.getMaxBuildHeight());
         final int maxY = Mth.clamp(base.getY() + 2, level.getMinBuildHeight(), level.getMaxBuildHeight());
+
         RandomSource rand = serverLevel.getRandom();
 
-        // Only check "non-full-grown" crops with 33% probability
+        // 只执行第一次触发，不参与递归
         for (int dx = -RADIUS_XZ; dx <= RADIUS_XZ; dx++) {
             for (int dz = -RADIUS_XZ; dz <= RADIUS_XZ; dz++) {
                 for (int y = minY; y <= maxY; y++) {
+
                     BlockPos pos = new BlockPos(base.getX() + dx, y, base.getZ() + dz);
                     BlockState state = serverLevel.getBlockState(pos);
                     Block block = state.getBlock();
                     if (!(block instanceof CropBlock crop)) continue;
 
-                    if (crop.isMaxAge(state)) continue; // Skip if full-grown
+                    // 完全成熟跳过
+                    if (crop.isMaxAge(state)) continue;
 
-                    // 33% check
+                    // 33% 概率启用惩罚
                     if (rand.nextFloat() <= SUCCESS_PROB) {
+                        // 伤害一次（首次惩罚，不参与递归）
                         player.hurt(ModDamageSources.of(serverLevel, ModDamageTypes.CROP_PUNISHMENT), DAMAGE_AMOUNT);
 
+                        // 完成任务
                         FTBHelper.completeTask((ServerPlayer) player, "663E473FB546B1AE");
 
+                        // 尝试生长一次
                         tryGrowOnceAndTrack(serverLevel, pos, crop, state);
 
+                        // 若还未成熟，进入递归（从 doRecheckChainable 开始）
                         BlockState after = serverLevel.getBlockState(pos);
-                        if (after.getBlock() instanceof CropBlock c2) {
-                            if (!c2.isMaxAge(after)) {
-                                scheduleRecheck(serverLevel, pos.immutable(), 1 + rand.nextInt(RECHECK_WINDOW_TICKS));
-                            }
+                        if (after.getBlock() instanceof CropBlock c2 && !c2.isMaxAge(after)) {
+                            int delay = 1 + rand.nextInt(RECHECK_WINDOW_TICKS);
+                            scheduleRecheck(serverLevel, pos.immutable(), delay);
                         }
                     }
                 }
@@ -133,9 +142,10 @@ public final class CropPunisher {
         if (rand.nextFloat() > SUCCESS_PROB) return;
 
         Player nearest = level.getNearestPlayer(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, RADIUS_XZ + 2, false);
-        if (nearest != null) {
+        if (nearest != null && !nearest.isAlive() && !nearest.isRemoved() && !nearest.isDeadOrDying() && !(nearest.getHealth() <= 0.0F)) {
             nearest.hurt(ModDamageSources.of(level, ModDamageTypes.CROP_PUNISHMENT), DAMAGE_AMOUNT);
         }
+
 
         tryGrowOnceAndTrack(level, pos, crop, state);
 
