@@ -1,5 +1,6 @@
 package com.petitioner0.divinecore;
 
+import com.petitioner0.divinecore.particles.ModParticles;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.PathPackResources;
 import net.neoforged.neoforge.event.AddPackFindersEvent;
@@ -82,6 +83,7 @@ public class DivineCore {
         modEventBus.addListener(this::onCommonSetup);
 
         modEventBus.addListener(this::onAddPackFinders);
+        ModParticles.PARTICLE_TYPES.register(modEventBus);
 
     }
 
@@ -101,7 +103,7 @@ public class DivineCore {
                 PackType.CLIENT_RESOURCES,
                 Component.literal("DivineCore 语言覆盖包"),
                 PackSource.BUILT_IN,
-                false,                // alwaysActive = true → 永远启用，玩家不能关
+                true,                // alwaysActive = true → 永远启用，玩家不能关
                 Pack.Position.TOP    // 放在最上层，覆盖所有其他资源包/模组资源
         );
 
@@ -109,9 +111,7 @@ public class DivineCore {
     }
 
     private void onCommonSetup(final FMLCommonSetupEvent event) {
-        event.enqueueWork(() -> {
-            OrbitingEffectHandler.registerOrbitingLogics();
-        });
+        event.enqueueWork(OrbitingEffectHandler::registerOrbitingLogics);
     }
 
     @SubscribeEvent

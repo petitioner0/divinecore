@@ -1,12 +1,10 @@
 package com.petitioner0.divinecore.items.AllItems;
 
-import com.petitioner0.divinecore.items.AbstractFinalItem.AbstractFinalItem;
 import com.petitioner0.divinecore.items.AbstractOrbitingItem.AbstractOrbitingItem;
 import com.petitioner0.divinecore.items.AbstractOrbitingItem.OrbitPreset;
 
-public class OriginOfFormAndEssence extends AbstractFinalItem {
-    public OriginOfFormAndEssence(Properties props) {
+public class Malkuth extends AbstractOrbitingItem {
+    public Malkuth(Properties props) {
         super(props, OrbitPreset.HEAVY);
     }
-    
 }

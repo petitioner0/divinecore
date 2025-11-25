@@ -38,5 +38,11 @@ public class NetworkInit {
             S2CRemoveOrbitingItem.STREAM_CODEC,
             (payload, ctx) -> ctx.enqueueWork(payload::handleClient)
         );
+
+        registrar.playToClient(
+                S2CStartStormFunnel.TYPE,
+                S2CStartStormFunnel.STREAM_CODEC,
+                (payload, ctx) -> ctx.enqueueWork(payload::handleClient)
+        );
     }
 }

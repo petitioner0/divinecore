@@ -78,6 +78,8 @@ public final class ModItems {
             ITEMS.register("genesis_of_life_and_death", id -> new GenesisOfLifeAndDeath(defaultProps()));
     public static final DeferredItem<Item> SOURCE_OF_VOID_AND_REALITY =
             ITEMS.register("source_of_void_and_reality", id -> new SourceOfVoidAndReality(defaultProps()));
+    public static final DeferredItem<Item> MALKUTH =
+            ITEMS.register("malkuth", id -> new Malkuth(defaultProps()));
 
     static {
         ItemHelper.register("aetherial_reverie", AETHERIAL_REVERIE);
@@ -107,6 +109,7 @@ public final class ModItems {
         ItemHelper.register("root_of_thought_and_soul", ROOT_OF_THOUGHT_AND_SOUL);
         ItemHelper.register("genesis_of_life_and_death", GENESIS_OF_LIFE_AND_DEATH);
         ItemHelper.register("source_of_void_and_reality", SOURCE_OF_VOID_AND_REALITY);
+        ItemHelper.register("malkuth", MALKUTH);
     }
 
     private static Item.Properties defaultProps() {
